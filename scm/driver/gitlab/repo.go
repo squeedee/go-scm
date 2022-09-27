@@ -459,6 +459,7 @@ func (s *repositoryService) DeleteHook(ctx context.Context, repo, id string) (*s
 	return s.client.do(ctx, "DELETE", path, nil, nil)
 }
 
+// Delete a given repo by 'name' or 'namespace/name'
 func (s *repositoryService) Delete(ctx context.Context, repo string) (*scm.Response, error) {
 	path := fmt.Sprintf("api/v4/projects/%s", encode(repo))
 	return s.client.do(ctx, "DELETE", path, nil, nil)
