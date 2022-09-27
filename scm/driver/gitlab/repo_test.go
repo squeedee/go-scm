@@ -7,7 +7,9 @@ package gitlab
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -69,22 +71,30 @@ func TestRepositoryCreate(t *testing.T) {
 
 func TestRepositoryDelete(t *testing.T) {
 	defer gock.Off()
-
-	gock.New("https://gitlab.com").
-		Delete("/api/v4/projects/diaspora").
-		Reply(202).
-		Type("application/json").
-		SetHeaders(mockHeaders)
-
 	client := NewDefault()
-	res, err := client.Repositories.Delete(context.Background(), "diaspora")
-	if err != nil {
-		t.Error(err)
-		return
+
+	repoNames := []string{
+		"diaspora",
+		"diaspora/diaspora",
 	}
 
-	t.Run("Request", testRequest(res))
-	t.Run("Rate", testRate(res))
+	for _, name := range repoNames {
+		encodedName := strings.Replace(name, "/", "%2F", -1)
+		gock.New("https://gitlab.com").
+			Delete(fmt.Sprintf("/api/v4/projects/%s", encodedName)).
+			Reply(202).
+			Type("application/json").
+			SetHeaders(mockHeaders)
+
+		res, err := client.Repositories.Delete(context.Background(), name)
+		if err != nil {
+			t.Error(err, "name:", name)
+			return
+		}
+
+		t.Run("Request", testRequest(res))
+		t.Run("Rate", testRate(res))
+	}
 }
 
 func TestRepositoryFork(t *testing.T) {
